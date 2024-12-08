@@ -1,21 +1,30 @@
-// Set the attributes to allow any keys and very permissive values
-export type HTMLAttributes = Record<string, JSXNode | undefined> & JSXChildren;
 
 namespace JSX {
-  export type IntrinsicElements = Record<string, HTMLAttributes>;
+  export type IntrinsicElements = {
+    [K in keyof HTMLElementTagNameMap]: HTMLAttributes;
+  };
 
   // Declare the shape of JSX rendering result
   // This is required so the return types of components can be inferred
   export type Element = PUIElement;
   export type Node = PUINode;
 
-  export type HTMLAttributes = {
-    children?: JSXNode | JSXNode[] | undefined;
+  type NonFn<T> = T extends (...args: any[]) => any ? never : T;
+  type PickElement<TKey extends keyof HTMLElementTagNameMap> = HTMLElementTagNameMap[TKey];
+
+  type EventCallback<TEvent extends Event> = (event: TEvent, model: Record<string, unknown | undefined> | { item: Record<string, unknown | undefined> & { $index: number } }) => void;
+
+  export type HTMLAttributes = JSXChildren & {
+    [Key in keyof PickElement<keyof HTMLElementTagNameMap>]?:
+    | Key extends "children" ? JSXChildren["children"]
+    : NonFn<PickElement<keyof HTMLElementTagNameMap>[Key] | (JSXNode & {})>;
   } & {
-    [key: string]: JSXNode | JSXNode[] | ((event: Event) => void) | undefined;
+    [Key in keyof HTMLElementEventMap as `on${Capitalize<Key>}`]?:
+    | EventCallback<HTMLElementEventMap[Key]>
+    | undefined;
+  } & {
+    [key: string & {}]: JSXNode | JSXNode[] | ((event: Event) => void) | undefined;
   };
-  // export type HTMLAttributes = JSXChildren & Record<string, JSXNode | undefined> &
-  //   PUINodeAttributes;
 }
 
 export type { JSX };

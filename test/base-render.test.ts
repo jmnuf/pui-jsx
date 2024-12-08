@@ -1,6 +1,5 @@
 import { expect, test, describe } from "bun:test";
 
-import type { JSXNode } from "../src/types";
 import { genModel, modelData } from "../src/index";
 import { jsxElement } from "../src/jsx-node-builder";
 
@@ -32,7 +31,7 @@ describe("Template rendering", () => {
           "Urmom",
           jsxElement("span", {}),
         ],
-      } as any);
+      });
       expect(node).toBeDefined();
       const model = genModel(node);
       expect(model).toBeDefined();
@@ -68,9 +67,9 @@ describe("Template rendering", () => {
         lorem: 32,
         ipsum: 32,
         children: [
-          jsxElement("span", { class: "text-center", children: "Lorem ipsum" }) as JSXNode,
+          jsxElement("span", { class: "text-center", children: "Lorem ipsum" }),
           "Lorem picsum",
-          jsxElement("input", { type: "number" }) as JSXNode,
+          jsxElement("input", { type: "number" }),
         ],
       });
       expect(node).toBeDefined();
@@ -163,3 +162,4 @@ describe("Template rendering", () => {
     expect(model.template).toEqual("<div><label for=\"gae-btn\">Click if gae <button id=\"gae-btn\" ${ click @=> __child_0_1_onClick__ }>GAE</button></label></div>");
   });
 });
+

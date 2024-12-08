@@ -2,7 +2,7 @@ import type { JSX, FunctionComponent, JSXNode, PUINodeType, PUINodeAttributes } 
 import { PUINode, PUIElement } from "./types";
 
 export function jsxElement(
-  tag: string | FunctionComponent | undefined,
+  tag: (keyof JSX.IntrinsicElements) | FunctionComponent | (string & {}) | undefined,
   props: JSX.HTMLAttributes,
   _key?: string,
 ): JSX.Element {
