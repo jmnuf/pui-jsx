@@ -127,6 +127,53 @@ describe("Template rendering", () => {
       expect(model).toBeDefined();
       expect(model.template).toEqual("<div><h2>Names</h2><p>Is your name ${ __child_1_1__ }?</p></div>");
     });
+
+    describe("State as an attribute", () => {
+      const [state] = modelData("flex");
+      test("model to attribute", () => {
+        const node = jsxElement("div", {
+          class: state.model(),
+          children: "Hello, World"
+        });
+        expect(node).toBeDefined();
+        const model = genModel(node);
+        expect(model).toBeDefined();
+        expect(model.template).toEqual("<div ${ class <== __root_attr_class__ }>Hello, World</div>");
+      });
+
+      test("attribute to model", () => {
+        const node = jsxElement("input", {
+          value: state.attr(),
+          type: "number",
+        });
+        expect(node).toBeDefined();
+        const model = genModel(node);
+        expect(model).toBeDefined();
+        expect(model.template).toEqual("<input type=\"number\" ${ value ==> __root_attr_value__ } />");
+      });
+
+      test("one time", () => {
+        const node = jsxElement("input", {
+          value: state.once(),
+          type: "number",
+        });
+        expect(node).toBeDefined();
+        const model = genModel(node);
+        expect(model).toBeDefined();
+        expect(model.template).toEqual("<input type=\"number\" ${ value <=| __root_attr_value__ } />");
+      });
+
+      test("two-way", () => {
+        const node = jsxElement("input", {
+          value: state.sync(),
+          type: "number",
+        });
+        expect(node).toBeDefined();
+        const model = genModel(node);
+        expect(model).toBeDefined();
+        expect(model.template).toEqual("<input type=\"number\" ${ value <=> __root_attr_value__ } />");
+      });
+    });
   });
 
   test("Event callback on base element", () => {

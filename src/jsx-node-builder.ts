@@ -1,5 +1,5 @@
 import type { JSX, FunctionComponent, JSXNode, PUINodeType, PUINodeAttributes } from "./types";
-import { PUINode, PUIElement } from "./types";
+import { PUINode, PUIState, PUIElement } from "./types";
 
 export function jsxElement(
   tag: (keyof JSX.IntrinsicElements) | FunctionComponent | (string & {}) | undefined,
@@ -28,11 +28,11 @@ export const jsxFragment = jsxElement.bind(undefined, undefined);
 function elementFromTag(tag: string, attributes: JSX.HTMLAttributes): JSX.Element {
   const { children, className } = attributes;
   delete attributes.children;
-  const dataRefs = findState(attributes);
   if (className != null) {
     delete attributes.className;
     attributes["class"] = className;
   }
+  const dataRefs = findState(attributes);
   // TODO: Handle children rendering
   return createElement(
     tag,
@@ -43,7 +43,7 @@ function elementFromTag(tag: string, attributes: JSX.HTMLAttributes): JSX.Elemen
 }
 
 function findState(attributes: JSX.HTMLAttributes) {
-  const states: Record<string, JSX.Node> = {};
+  const states: Record<string, PUIState<unknown>> = {};
   for (const [key, val] of Object.entries(attributes)) {
     if (!(val instanceof PUINode)) {
       continue;
@@ -51,7 +51,8 @@ function findState(attributes: JSX.HTMLAttributes) {
     if (val.ntype != "state") {
       continue;
     }
-    states[key] = val;
+    (val as PUIState<unknown>).tag = key;
+    states[key] = val as PUIState<unknown>;
   }
   return states;
 }
@@ -113,63 +114,25 @@ export function createTextNode(text: string): PUINode {
 }
 export function createStateNode<T = unknown>(
   key: string,
-  initValue: any,
-): PUINode & { get value(): T; set value(v: T) } {
-  const node = new PUINode("state", key, {
-    value: initValue,
+  initValue: T,
+): PUIState<T> {
+  return new PUIState<T>(key, {
+    value: initValue as any,
   });
-  // TODO: Move to an actual class loser LOL
-  Object.defineProperties(node, {
-    value: {
-      enumerable: true,
-      configurable: false,
-      get() {
-        return node.attrs.value as unknown as T;
-      },
-      set(v: T) {
-        node.attrs.value = v as any;
-      },
-    },
-    [Symbol.toPrimitive]: {
-      enumerable: false,
-      writable: false,
-      configurable: false,
-      value(hint: "number" | "string" | "default") {
-        if (hint == "string") {
-          return String(node.attrs.value);
-        }
-        if (hint == "number") {
-          return Number(node.attrs.value);
-        }
-        return node.attrs.value;
-      },
-    },
-    valueOf: {
-      enumerable: false,
-      writable: false,
-      configurable: false,
-      value() {
-        return node.attrs.value;
-      },
-    },
-    toString: {
-      enumerable: false,
-      writable: false,
-      configurable: false,
-      value() {
-        return String(node.attrs.value);
-      },
-    },
-  });
-  return node as any;
 }
 
 
 export function createElement(
   tag: string,
-  data: Record<string, unknown>,
+  data: Record<string, PUIState<unknown>>,
   attrs: PUINodeAttributes = {},
   children: Array<PUINode> = [],
 ) {
-  return new PUIElement(data, children, tag, attrs);
+  const elem = new PUIElement(data, children, tag, attrs);
+  // State of that's bound to an attribute is easier to track separately I think
+  // as of the writing of this code.
+  for (const key of Object.keys(data)) {
+    delete elem.attrs[key];
+  }
+  return elem;
 }

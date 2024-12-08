@@ -9,10 +9,10 @@ Done Tasks:
 - [x] Build and render a proper PUI model/template
 - [x] Display simple states
 - [x] Bind event callback functions
+- [x] Attribute one way binding to state (attribute is always set to state value)
+- [x] Attribute two way binding to state (state value and attribute will try to remain synced to one another)
 
 Main Tasks:
-- [ ] Attribute one way binding to state (attribute is always set to state value)
-- [ ] Attribute two way binding to state (state value and attribute will try to remain synced to one another)
 - [ ] State sub-property binding
 - [ ] Element ref binding
 - [ ] Iteration binding (PUI binding operator: `${ item <=* list }`)

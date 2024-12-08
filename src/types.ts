@@ -68,9 +68,123 @@ export class PUINode {
   ) { }
 }
 
+export type BindStyleType = "basic" | "onetime" | "model" | "attr" | "twoway" | "ref.view" | "ref.elem";
+export type BindStyle = BindStyleType | true | undefined;
+
+export class PUIState<T> extends PUINode {
+  constructor(
+    public tag: string,
+    public attrs: PUINodeAttributes & { value: T },
+    public bindStyle: BindStyle = "model",
+  ) {
+    super("state", tag, attrs);
+    this.sync = this.sync.bind(this);
+    this.model = this.model.bind(this);
+    this.once = this.once.bind(this);
+    this.attr = this.attr.bind(this);
+
+    const self = this;
+    Object.defineProperties(self, {
+      [Symbol.toPrimitive]: {
+        enumerable: false,
+        writable: false,
+        configurable: false,
+        value: self[Symbol.toPrimitive].bind(self),
+      },
+      valueOf: {
+        enumerable: false,
+        writable: false,
+        configurable: false,
+        value: self.valueOf.bind(self),
+      },
+      toString: {
+        enumerable: false,
+        writable: false,
+        configurable: false,
+        value: self.toString.bind(self),
+      },
+    });
+  }
+
+  get value(): T {
+    return this.attrs.value as any;
+  }
+  set value(v: T) {
+    this.attrs.value = v as any;
+  }
+
+  sync() {
+    const self = this;
+    const clone = new PUIState(self.tag, {} as any, "twoway");
+    Object.defineProperty(clone, "attrs", {
+      enumerable: true,
+      configurable: false,
+      get() {
+        return self.attrs;
+      },
+    });
+    return clone;
+  }
+
+  model() {
+    const self = this;
+    const clone = new PUIState(self.tag, {} as any, "model");
+    Object.defineProperty(clone, "attrs", {
+      enumerable: true,
+      configurable: false,
+      get() {
+        return self.attrs;
+      },
+    });
+    return clone;
+  }
+
+  once() {
+    const self = this;
+    const clone = new PUIState(self.tag, {} as any, "onetime");
+    Object.defineProperty(clone, "attrs", {
+      enumerable: true,
+      configurable: false,
+      get() {
+        return self.attrs;
+      },
+    });
+    return clone;
+  }
+
+  attr() {
+    const self = this;
+    const clone = new PUIState(self.tag, {} as any, "attr");
+    Object.defineProperty(clone, "attrs", {
+      enumerable: true,
+      configurable: false,
+      get() {
+        return self.attrs;
+      },
+    });
+    return clone;
+  }
+
+  [Symbol.toPrimitive](hint: "number" | "string" | "default") {
+    if (hint == "string") {
+      return String(this.attrs.value);
+    }
+    if (hint == "number") {
+      return Number(this.attrs.value);
+    }
+    return this.attrs.value;
+  }
+  valueOf() {
+    return this.attrs.value;
+  }
+  toString() {
+    return String(this.attrs.value);
+  }
+}
+
 export class PUIElement extends PUINode {
   constructor(
-    public data: Record<string, unknown>,
+    public data: Record<string, PUIState<unknown>>,
     public children: Array<PUINode>,
     tag: string,
     attrs: PUINodeAttributes,
