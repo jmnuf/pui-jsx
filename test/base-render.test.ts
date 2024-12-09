@@ -1,6 +1,6 @@
 import { expect, test, describe } from "bun:test";
 
-import { genModel, modelData } from "../src/index";
+import { genModel, modelData, renderHTML } from "../src/index";
 import { jsxElement } from "../src/jsx-node-builder";
 
 
@@ -207,6 +207,44 @@ describe("Template rendering", () => {
     const model = genModel(node);
     expect(model).toBeDefined();
     expect(model.template).toEqual("<div><label for=\"gae-btn\">Click if gae <button id=\"gae-btn\" ${ click @=> __child_0_1_onClick__ }>GAE</button></label></div>");
+  });
+});
+
+describe("HTML Rendering", () => {
+  test("Simple structure", () => {
+    const Component = () => jsxElement("div", {
+      children: [
+        jsxElement("h1", { children: "HTML Test" }),
+        jsxElement("p", {
+          children: [
+            "As of the writing of this nothing is escaped which is dangerous!",
+            jsxElement("br", {}),
+            "But I'm sure that in like ",
+            5,
+            "days after writing this it will be done!"
+          ]
+        }),
+      ],
+    });
+    expect(Component()).toBeDefined();
+    const html = renderHTML(Component);
+    expect(typeof html).toEqual("string");
+    expect(html).toEqual("<div><h1>HTML Test</h1><p>As of the writing of this nothing is escaped which is dangerous!<br />But I'm sure that in like 5days after writing this it will be done!</p></div>");
+  });
+
+  test.todo("Escape strings", () => {
+    const Component = () => jsxElement("p", {
+      children: [
+        "When `x < ",
+        0,
+        "` then we can assume something is wrong.",
+        " We can make this assumption only when `y > 12.314`"
+      ],
+    });
+    expect(Component()).toBeDefined();
+    const html = renderHTML(Component);
+    expect(typeof html).toEqual("string");
+    expect(html).toEqual("<p>When `x &lt; 0` then we can assume something is wrong. We can make this assumption only when `y &gt; 12.314`</p>");
   });
 });
 

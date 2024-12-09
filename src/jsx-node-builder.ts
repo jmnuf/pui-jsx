@@ -1,5 +1,9 @@
-import type { JSX, FunctionComponent, JSXNode, PUINodeType, PUINodeAttributes } from "./types";
-import { PUINode, PUIState, PUIElement } from "./types";
+import type { JSX, FunctionComponent, JSXNode, PUINodeType, PUINodeAttributes, SelfClosingHTMLTag } from "./types";
+import { PUINode, PUIState, PUIElement, SELF_CLOSING_HTML_TAGS } from "./types";
+
+export function isTagSelfClosing(tag: string): tag is SelfClosingHTMLTag {
+  return SELF_CLOSING_HTML_TAGS.includes(tag as any);
+}
 
 export function jsxElement(
   tag: (keyof JSX.IntrinsicElements) | FunctionComponent | (string & {}) | undefined,
@@ -33,6 +37,15 @@ function elementFromTag(tag: string, attributes: JSX.HTMLAttributes): JSX.Elemen
     attributes["class"] = className;
   }
   const dataRefs = findState(attributes);
+  if (isTagSelfClosing(tag) && children != null) {
+    if (Array.isArray(children)) {
+      if (children.length > 0) {
+        throw new TypeError(`Self closing tag (void element) can NOT have children: ${tag}`);
+      }
+    } else {
+      throw new TypeError(`Self closing tag (void element) can NOT have children: ${tag}`);
+    }
+  }
   // TODO: Handle children rendering
   return createElement(
     tag,

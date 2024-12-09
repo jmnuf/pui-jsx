@@ -1,6 +1,6 @@
 import type { PUIElement, PUIState, BaseCompProps, FunctionComponent } from "./types";
 import { PUINode } from "./types";
-import { createStateNode } from "./jsx-node-builder";
+import { createStateNode, isTagSelfClosing } from "./jsx-node-builder";
 
 export type FC<T extends BaseCompProps = BaseCompProps> = FunctionComponent<T>;
 
@@ -303,12 +303,126 @@ function renderChildrenTemplate(idxs: Array<number>, elem: PUIElement, model: an
 
 
 // TODO: Handle building both clean HTML and Template HTML strings
-// function renderSimpleHTML(Component: FunctionComponent) {}
-// NOTE: Only thing that is missing for this to be right is to also generate
-//  the full template of sub-components. Which currently only render as a binding
-// function renderTemplateHTML(Component: FunctionComponent) {
-//   return genModel(Component({ children: [] })).template;
-// }
+// function renderHTMLWithTemplate(Component: FunctionComponent) {}
+export function renderHTML(Component: FunctionComponent): string {
+  const elem = Component({ children: [] });
+  const { tag, data, attrs } = elem;
+  let html = `<${tag}`;
+  const dataEntries = Object.entries(data);
+  const attrsEntries = Object.entries(attrs);
+  if (dataEntries.length > 0 || attrsEntries.length > 0) {
+    html += renderAttributesHTML(dataEntries, attrsEntries);
+  }
+  if (isTagSelfClosing(tag)) {
+    if (elem.children.length > 0) {
+      console.error(`Self closing tag can't have children: <${tag} />`);
+    }
+    html += " />";
+    return html;
+  }
+  html += ">";
+  if (elem.children.length > 0) {
+    html += renderChildrenHTML(elem.children);
+  }
+  html += `</${tag}>`;
+  return html;
+}
+
+function renderAttributesHTML(data: Array<[string, PUIState<unknown>]>, attrs: Array<[string, any]>): string {
+  let html = "";
+  for (const [key, val] of attrs) {
+    const vt = typeof val;
+    switch (vt) {
+      case "function":
+      case "undefined":
+        continue;
+      case "bigint":
+      case "number":
+      case "boolean":
+      case "string":
+        html += ` ${key}="${val}"`;
+        continue;
+      case "object":
+        if (typeof val.toString == "function") {
+          html += ` ${key}="${val.toString()}"`;
+          continue;
+        }
+        if (typeof val[Symbol.toPrimitive] == "function") {
+          const vstr = val[Symbol.toPrimitive]("string");
+          html += ` ${key}="${vstr}"`;
+          continue;
+        }
+        break;
+    };
+    console.error("Unsupported attribute value type on HTML render:", vt, val);
+  }
+  for (const [key, ref] of data) {
+    const val = ref.attrs.value as any;
+    const vt = typeof val;
+    switch (vt) {
+      case "function":
+      case "undefined":
+        continue;
+      case "bigint":
+      case "number":
+      case "boolean":
+      case "string":
+        html += ` ${key}="${val}"`;
+        continue;
+      case "object":
+        if (typeof val.toString != "function") {
+          break;
+        }
+        html += ` ${key}="${val.toString()}"`;
+        continue;
+    };
+    console.error("Unsupported data attribute value type on HTML render:", vt, val);
+  }
+  return html;
+}
+
+function renderChildrenHTML(children: Array<PUINode>) {
+  let html = "";
+  for (const child of children) {
+    // "custom" | "element" | "text" | "state"
+    switch (child.ntype) {
+      case "text":
+        // TODO: Add HTML escaping
+        html += child.tag;
+        break;
+      case "state":
+        // TODO: Probably should care more about what's here
+        // TODO: Add HTML escaping
+        html += `${(child as PUIState<any>).value}`;
+        break;
+      // TODO: Maybe custom elements need special handling sometimes?
+      case "custom":
+      case "element":
+        const subelem = child as PUIElement;
+        let subHtml = `<${subelem.tag}`;
+        const dataEntries = Object.entries(subelem.data);
+        const attrsEntries = Object.entries(subelem.attrs);
+        if (dataEntries.length > 0 || attrsEntries.length > 0) {
+          subHtml += renderAttributesHTML(dataEntries, attrsEntries);
+        }
+        if (isTagSelfClosing(subelem.tag)) {
+          if (subelem.children.length > 0) {
+            console.error(`Self closing tag can't have children: <${subelem.tag} />`);
+          }
+          subHtml += " />";
+        } else {
+          subHtml += ">";
+          if (subelem.children.length > 0) {
+            subHtml += renderChildrenHTML(subelem.children);
+          }
+          subHtml += `</${subelem.tag}>`;
+        }
+        html += subHtml;
+        break;
+    }
+  }
+  return html;
+}
 
 /**
  * Generates a model object with a template for the Component and passes them
