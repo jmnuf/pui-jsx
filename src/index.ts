@@ -328,6 +328,27 @@ export function renderHTML(Component: FunctionComponent): string {
   return html;
 }
 
+// TODO: Test this
+function escapeHTMLAttr(value: string): string {
+  return value
+    .replaceAll('&', "&amp;")
+    .replaceAll('"', "&quot;")
+    .replaceAll('<', "&lt;")
+    .replaceAll('>', "&gt;")
+    .replaceAll('\n', "&#10;");
+}
+
+// TODO: Test this
+function escapeHTMLChild(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("\"", "&quot;")
+    .replaceAll("'", "&#39;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll("\n", "<br />");
+}
+
 function renderAttributesHTML(data: Array<[string, PUIState<unknown>]>, attrs: Array<[string, any]>): string {
   let html = "";
   for (const [key, val] of attrs) {
@@ -340,15 +361,19 @@ function renderAttributesHTML(data: Array<[string, PUIState<unknown>]>, attrs: A
       case "number":
       case "boolean":
       case "string":
-        html += ` ${key}="${val}"`;
+        {
+          const vstr = escapeHTMLAttr(`${val}`);
+          html += ` ${key}="${vstr}"`;
+        }
         continue;
       case "object":
         if (typeof val.toString == "function") {
-          html += ` ${key}="${val.toString()}"`;
+          const vstr = escapeHTMLAttr(val.toString());
+          html += ` ${key}="${vstr}"`;
           continue;
         }
         if (typeof val[Symbol.toPrimitive] == "function") {
-          const vstr = val[Symbol.toPrimitive]("string");
+          const vstr = escapeHTMLAttr(val[Symbol.toPrimitive]("string"));
           html += ` ${key}="${vstr}"`;
           continue;
         }
@@ -387,13 +412,11 @@ function renderChildrenHTML(children: Array<PUINode>) {
     // "custom" | "element" | "text" | "state"
     switch (child.ntype) {
       case "text":
-        // TODO: Add HTML escaping
-        html += child.tag;
+        html += escapeHTMLChild(child.tag);
         break;
       case "state":
         // TODO: Probably should care more about what's here
-        // TODO: Add HTML escaping
-        html += `${(child as PUIState<any>).value}`;
+        html += escapeHTMLChild(`${(child as PUIState<any>).value}`);
         break;
       // TODO: Maybe custom elements need special handling sometimes?
       case "custom":
