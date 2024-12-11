@@ -220,7 +220,7 @@ describe("Static HTML Rendering", () => {
           children: [
             "As of the writing of this nothing is escaped which is dangerous!",
             jsxElement("br", {}),
-            "But I'm sure that in like ",
+            "But I am sure that in like ",
             5,
             "days after writing this it will be done!"
           ]
@@ -230,22 +230,57 @@ describe("Static HTML Rendering", () => {
     expect(Component()).toBeDefined();
     const html = renderHTML(Component);
     expect(typeof html).toEqual("string");
-    expect(html).toEqual("<div><h1>HTML Test</h1><p>As of the writing of this nothing is escaped which is dangerous!<br />But I'm sure that in like 5days after writing this it will be done!</p></div>");
+    expect(html).toEqual("<div><h1>HTML Test</h1><p>As of the writing of this nothing is escaped which is dangerous!<br />But I am sure that in like 5days after writing this it will be done!</p></div>");
   });
 
-  test.todo("Escape strings", () => {
-    const Component = () => jsxElement("p", {
-      children: [
-        "When `x < ",
-        0,
-        "` then we can assume something is wrong.",
-        " We can make this assumption only when `y > 12.314`"
-      ],
+  // TODO: I'm not really sure about these tests, probably could do better? I'm not sure
+  describe("Escape strings", () => {
+    test("Angle brackets", () => {
+      const Component = () => jsxElement("p", {
+        children: [
+          "When `x < ",
+          0,
+          "` then we can assume something is wrong.",
+          " We can make this assumption only when `y > 12.314`"
+        ],
+      });
+      expect(Component()).toBeDefined();
+      const html = renderHTML(Component);
+      expect(typeof html).toEqual("string");
+      expect(html).toEqual("<p>When `x &lt; 0` then we can assume something is wrong. We can make this assumption only when `y &gt; 12.314`</p>");
     });
-    expect(Component()).toBeDefined();
-    const html = renderHTML(Component);
-    expect(typeof html).toEqual("string");
-    expect(html).toEqual("<p>When `x &lt; 0` then we can assume something is wrong. We can make this assumption only when `y &gt; 12.314`</p>");
-  });
+
+    test("Quotes", () => {
+      const Component = () => jsxElement("div", {
+        // IDK what attribute to use to test this ok
+        str: `'"'`,
+        children: jsxElement("p", {
+          children: [
+            "I don't really like using `'` for quoting strings, ",
+            `I do think we should use \`"\` for that and \`'\` for single chars`
+          ],
+        }),
+      });
+      expect(Component()).toBeDefined();
+      const html = renderHTML(Component);
+      expect(typeof html).toEqual("string");
+      expect(html).toEqual("<div str=\"'&quot;'\"><p>I don&#39;t really like using `&#39;` for quoting strings, I do think we should use `&quot;` for that and `&#39;` for single chars</p></div>");
+    });
+
+    test("New lines", () => {
+      const Component = () => jsxElement("p", {
+        str: "Why would you ever put a newline on an attribute honestly?\nThat just sounds pretty crazy",
+        children: [
+          "Putting a new line in the content is understandable.\n",
+          "You should probably manually add that br for clarity, but",
+          " you do you I guess."
+        ],
+      });
+      expect(Component()).toBeDefined();
+      const html = renderHTML(Component);
+      expect(typeof html).toEqual("string");
+      expect(html).toEqual("<p str=\"Why would you ever put a newline on an attribute honestly?&#10;That just sounds pretty crazy\">Putting a new line in the content is understandable.<br />You should probably manually add that br for clarity, but you do you I guess.</p>");
+    });
+  })
 });
 

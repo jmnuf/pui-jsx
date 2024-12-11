@@ -1,7 +1,6 @@
 import type { FunctionComponent, PUINode, PUIState, PUIElement } from "../types";
 import { isTagSelfClosing } from "../jsx-node-builder";
 
-// TODO: Test this
 function escapeHTMLAttr(value: string): string {
   return value
     .replaceAll('&', "&amp;")
@@ -11,7 +10,6 @@ function escapeHTMLAttr(value: string): string {
     .replaceAll('\n', "&#10;");
 }
 
-// TODO: Test this
 function escapeHTMLChild(value: string): string {
   return value
     .replaceAll("&", "&amp;")
