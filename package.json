@@ -1,18 +1,28 @@
 {
   "name": "pui-jsx",
   "version": "0.2.0",
-  "main": "dist/index.js",
+  "main": "index.js",
   "type": "module",
-  "types": "dist/index.d.ts",
+  "types": "index.d.ts",
   "files": [
-    "dist",
+    "index.js",
+    "jsx-dev-runtime.js",
+    "jsx-node-builder.js",
+    "jsx-runtime.js",
+    "static",
+    "types.js",
+    "index.d.ts",
+    "jsx-dev-runtime.d.ts",
+    "jsx-node-builder.d.ts",
+    "jsx-runtime.d.ts",
+    "types.d.ts",
     "README.md"
   ],
   "author": "jmnuf <jose.m.nufio.0@gmail.com>",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "test": "bun test",
-    "pub": "bun run test && bun run build && npm publish"
+    "pub": "bun run publish.build.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
