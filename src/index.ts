@@ -129,8 +129,9 @@ function renderAttributesTemplate(model: PUIModel, data: Array<[string, PUIState
       }
       let eventName = key.substring(2);
       eventName = eventName[0].toLowerCase() + eventName.substring(1);
-      template += ` \${ ${eventName} @=> __root_${key}__ }`;
-      model[key] = val as (ev: Event) => void;
+      const modelKey = `__root_${key}__`;
+      template += ` \${ ${eventName} @=> ${modelKey} }`;
+      model[modelKey] = val as any;
       continue;
     }
     if (typeof val == "object") {
