@@ -1,6 +1,6 @@
 import type { PUIElement, PUIState, BaseCompProps, FunctionComponent } from "./types";
 import { PUINode } from "./types";
-import { createStateNode } from "./jsx-node-builder";
+import { createStateNode, isTagSelfClosing } from "./jsx-node-builder";
 import { escapeHTMLAttr, escapeHTMLChild } from "./static";
 
 export type FC<T extends BaseCompProps = BaseCompProps> = FunctionComponent<T>;
@@ -60,8 +60,16 @@ export function genModel(
   if (attrsEntries.length > 0 || dataEntries.length > 0) {
     template += renderAttributesTemplate(model, dataEntries, attrsEntries);
   }
+  if (isTagSelfClosing(tag)) {
+    template += " />";
+    if (elem.children.length > 0) {
+      console.error("Can't have children in void element");
+    }
+    model.template = template;
+    return model as any;
+  }
+  template += ">";
   if (elem.children.length > 0) {
-    template += ">";
     let child_idx = -1;
     for (const child of elem.children) {
       child_idx += 1;
@@ -93,26 +101,29 @@ export function genModel(
       }
       if (child.ntype == "element") {
         const subelem = child as PUIElement;
+        const selfClosing = isTagSelfClosing(subelem.tag);
         let subtemplate = `<${subelem.tag}`;
         const subattrs = Object.entries(subelem.attrs).filter(([key, _]) => key != "children");
         const subdata = Object.entries(subelem.data);
         if (subattrs.length > 0) {
           subtemplate += renderAttributesTemplate(model, subdata, subattrs);
         }
-        if (subelem.children.length > 0) {
+        if (subelem.children.length > 0 && !selfClosing) {
           subtemplate += ">";
           subtemplate += renderChildrenTemplate([child_idx], subelem, model, elem);
           subtemplate += `</${subelem.tag}>`;
         } else {
-          subtemplate += " />";
+          if (selfClosing) {
+            subtemplate += " />";
+          } else {
+            subtemplate += `></${subelem.tag}>`;
+          }
         }
         template += subtemplate;
       }
     }
-    template += `</${tag}>`;
-  } else {
-    template += " />";
   }
+  template += `</${tag}>`;
   model.template = template;
   return model as any;
 }
@@ -296,11 +307,13 @@ function renderChildrenTemplate(idxs: Array<number>, elem: PUIElement, model: an
         template += ` ${tag}="\${ ${key} }"`;
         console.error(`Invalid bindStyle set ${bindStyle} defaulting to basic model to attribute binding`);
       }
-      if (subelem.children.length == 0) {
+      if (isTagSelfClosing(subelem.tag)) {
         subtemplate += " />";
       } else {
         subtemplate += ">";
-        subtemplate += renderChildrenTemplate([...idxs, child_idx], subelem, model, parent);
+        if (subelem.children.length > 0) {
+          subtemplate += renderChildrenTemplate([...idxs, child_idx], subelem, model, parent);
+        }
         subtemplate += `</${subelem.tag}>`;
       }
       template += subtemplate;

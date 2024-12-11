@@ -12,7 +12,7 @@ describe("Model Template rendering", () => {
       expect(node).toBeDefined();
       const model = genModel(node);
       expect(model).toBeDefined();
-      expect(model.template).toEqual("<div />");
+      expect(model.template).toEqual("<div></div>");
     });
 
     test("Render with single child", () => {
@@ -22,7 +22,7 @@ describe("Model Template rendering", () => {
       expect(node).toBeDefined();
       const model = genModel(node);
       expect(model).toBeDefined();
-      expect(model.template).toEqual("<div><span /></div>");
+      expect(model.template).toEqual("<div><span></span></div>");
     });
 
     test("Render with children array", () => {
@@ -36,7 +36,7 @@ describe("Model Template rendering", () => {
       expect(node).toBeDefined();
       const model = genModel(node);
       expect(model).toBeDefined();
-      expect(model.template).toEqual("<div><span />Urmom<span /></div>");
+      expect(model.template).toEqual("<div><span></span>Urmom<span></span></div>");
     });
   });
 
@@ -77,6 +77,55 @@ describe("Model Template rendering", () => {
       const model = genModel(node);
       expect(model).toBeDefined();
       expect(model.template).toEqual("<div class=\"flex flex-col justify-center\" lorem=\"32\" ipsum=\"32\"><span class=\"text-center\">Lorem ipsum</span>Lorem picsum<input type=\"number\" /></div>");
+    });
+  });
+
+  describe("Escape strings", () => {
+    test("Angle brackets", () => {
+      const node = jsxElement("p", {
+        children: [
+          "When `x < ",
+          0,
+          "` then we can assume something is wrong.",
+          " We can make this assumption only when `y > 12.314`"
+        ],
+      });
+      expect(node).toBeDefined();
+      const model = genModel(node);
+      expect(model).toBeDefined();
+      expect(model.template).toEqual("<p>When `x &lt; 0` then we can assume something is wrong. We can make this assumption only when `y &gt; 12.314`</p>");
+    });
+
+    test("Quotes", () => {
+      const node = jsxElement("div", {
+        // IDK what attribute to use to test this ok
+        str: `'"'`,
+        children: jsxElement("p", {
+          children: [
+            "I don't really like using `'` for quoting strings, ",
+            `I do think we should use \`"\` for that and \`'\` for single chars`
+          ],
+        }),
+      });
+      expect(node).toBeDefined();
+      const model = genModel(node);
+      expect(model).toBeDefined()
+      expect(model.template).toEqual("<div str=\"'&quot;'\"><p>I don&#39;t really like using `&#39;` for quoting strings, I do think we should use `&quot;` for that and `&#39;` for single chars</p></div>");
+    });
+
+    test("New lines", () => {
+      const node = jsxElement("p", {
+        str: "Why would you ever put a newline on an attribute honestly?\nThat just sounds pretty crazy",
+        children: [
+          "Putting a new line in the content is understandable.\n",
+          "You should probably manually add that br for clarity, but",
+          " you do you I guess."
+        ],
+      });
+      expect(node).toBeDefined();
+      const model = genModel(node);
+      expect(model).toBeDefined();
+      expect(model.template).toEqual("<p str=\"Why would you ever put a newline on an attribute honestly?&#10;That just sounds pretty crazy\">Putting a new line in the content is understandable.<br />You should probably manually add that br for clarity, but you do you I guess.</p>");
     });
   });
 
@@ -180,13 +229,13 @@ describe("Model Template rendering", () => {
   test("Event callback on base element", () => {
     const onClick = () => { };
     const node = jsxElement("button", {
-      children: "Don't click on me!",
+      children: "Do not click on me!",
       onClick,
     });
     expect(node).toBeDefined();
     const model = genModel(node);
     expect(model).toBeDefined();
-    expect(model.template).toEqual("<button ${ click @=> __root_onClick__ }>Don't click on me!</button>");
+    expect(model.template).toEqual("<button ${ click @=> __root_onClick__ }>Do not click on me!</button>");
   });
 
   test("Event callback on child element", () => {
