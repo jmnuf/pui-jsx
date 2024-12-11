@@ -1,6 +1,7 @@
 import type { PUIElement, PUIState, BaseCompProps, FunctionComponent } from "./types";
 import { PUINode } from "./types";
 import { createStateNode } from "./jsx-node-builder";
+import { escapeHTMLAttr, escapeHTMLChild } from "./static";
 
 export type FC<T extends BaseCompProps = BaseCompProps> = FunctionComponent<T>;
 
@@ -65,7 +66,7 @@ export function genModel(
     for (const child of elem.children) {
       child_idx += 1;
       if (child.ntype == "text") {
-        template += child.tag;
+        template += escapeHTMLChild(child.tag);
         continue;
       }
       const mark = createMarker(child_idx, []);
@@ -146,7 +147,14 @@ function renderAttributesTemplate(model: PUIModel, data: Array<[string, PUIState
       model[key] = val;
       continue;
     }
-    template += ` ${key}="${val}"`;
+    // equal to null | undefined
+    // then don't render
+    if (val == null) {
+      continue;
+    }
+    // In best faith assuming a normal value
+    const escaped = escapeHTMLAttr(`${val}`);
+    template += ` ${key}="${escaped}"`;
   }
 
   for (const [tag, val] of data) {
@@ -198,7 +206,7 @@ function renderChildrenTemplate(idxs: Array<number>, elem: PUIElement, model: an
   for (const child of elem.children) {
     child_idx += 1;
     if (child.ntype == "text") {
-      template += child.tag;
+      template += escapeHTMLChild(child.tag);
       continue;
     }
     const mark = createMarker(child_idx, idxs);
@@ -232,8 +240,8 @@ function renderChildrenTemplate(idxs: Array<number>, elem: PUIElement, model: an
           continue;
         }
         if (typeof v != "function") {
-          // TODO: Not sure how to handle non-event attributes yet
-          subtemplate += ` ${sk}="${v}"`;
+          const escaped = escapeHTMLAttr(`${v}`);
+          subtemplate += ` ${sk}="${escaped}"`;
           continue;
         }
         const key = mark(sk);
