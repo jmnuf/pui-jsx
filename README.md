@@ -4,13 +4,19 @@ Minor project aimed into enabling the usage of JSX for building templates/models
 
 This project was initially inspired by [How to render JSX to whatever you want with a custom JSX Renderer](https://dev.to/afl_ext/how-to-render-jsx-to-whatever-you-want-with-a-custom-jsx-renderer-cjk) by [Adrian](https://dev.to/afl_ext). You could call it fate that this particular post just randomly reached me while I was looking up something completely unrelated to this.
 
-## Roadmap
+## Tasks
+NOTE: These tasks don't fully indicate what I'm doing or what will be done and what might not.
+
+
 Done Tasks:
 - [x] Build and render a proper PUI model/template
 - [x] Display simple states
 - [x] Bind event callback functions
-- [x] Attribute one way binding to state (attribute is always set to state value)
-- [x] Attribute two way binding to state (state value and attribute will try to remain synced to one another)
+- [x] Simple attribute binding (JSX `<input type={state()} />` == PUI binding `<input type="${ state }" />`)
+- [x] Attribute one way binding to state (JSX `<input type={state.model()} />` == PUI binding `<input ${ type <== state } />`)
+- [x] State one way binding to attribute (JSX `<input type={state.attr()} />` == PUI binding `<input ${ type ==> state } />`)
+- [x] Attribute two way binding to state (JSX `<input value={state.sync()} />` == PUI binding `<input ${ value <=> state } />`)
+- [x] Render static HTML from template (`import { renderHTML } from "pui-jsx/static"`)
 
 Main Tasks:
 - [ ] State sub-property binding
