@@ -57,12 +57,12 @@ async function cpy(input: string, output: string) {
     return;
   }
 
-  process.stdout.write("Press enter to continue... ");
-  for await (const _ of console) {
-    break;
-  }
+  // process.stdout.write("Press enter to continue... ");
+  // for await (const _ of console) {
+  //   break;
+  // }
 
-  // await $`npm publish`.nothrow();
+  await $`npm publish`.nothrow();
 
   try {
     for (const f of files) {
