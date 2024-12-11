@@ -1,10 +1,11 @@
 import { expect, test, describe } from "bun:test";
 
-import { genModel, modelData, renderHTML } from "../src/index";
+import { genModel, modelData } from "../src/index";
+import { renderHTML } from "../src/static/index";
 import { jsxElement } from "../src/jsx-node-builder";
 
 
-describe("Template rendering", () => {
+describe("Model Template rendering", () => {
   describe("Element with no attributes", () => {
     test("Render with no children", () => {
       const node = jsxElement("div", {});
@@ -210,7 +211,7 @@ describe("Template rendering", () => {
   });
 });
 
-describe("HTML Rendering", () => {
+describe("Static HTML Rendering", () => {
   test("Simple structure", () => {
     const Component = () => jsxElement("div", {
       children: [
