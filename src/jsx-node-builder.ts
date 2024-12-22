@@ -13,10 +13,17 @@ export function jsxElement(
   if (typeof tag === "function") {
     // handling Function Components
     return tag(props);
-  } else if (tag === undefined || tag == "") {
+  } else if (tag == undefined || tag == "") {
     // handling <></>
-    throw new TypeError(
-      `Tag is required for rendering PUI JSX element. Fragments aren't supported yet`,
+    const { children } = props;
+    if (children == null) {
+      throw new Error("PUI Fragment can't be empty. It must have children");
+    }
+    return createElement(
+      "",
+      {},
+      {},
+      buildChildrenNodes(children)
     );
   } else if (typeof tag == "string") {
     // handling plain HTML codes
@@ -32,8 +39,8 @@ export const jsxFragment = jsxElement.bind(undefined, undefined);
 function elementFromTag(tag: string, attributes: JSX.HTMLAttributes): JSX.Element {
   const { children, className } = attributes;
   delete attributes.children;
+  delete attributes.className;
   if (className != null) {
-    delete attributes.className;
     attributes["class"] = className;
   }
   const dataRefs = findState(attributes);
