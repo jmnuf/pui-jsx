@@ -53,7 +53,6 @@ function elementFromTag(tag: string, attributes: JSX.HTMLAttributes): JSX.Elemen
       throw new TypeError(`Self closing tag (void element) can NOT have children: ${tag}`);
     }
   }
-  // TODO: Handle children rendering
   return createElement(
     tag,
     dataRefs,
@@ -103,8 +102,10 @@ function buildChildrenNodes(children: JSXNode | Array<JSXNode>): Array<JSX.Node>
       case "object":
         if (child instanceof PUINode) {
           if (child.ntype == "custom") {
-            console.error("Custom elements are not supported in JSX yet");
-            continue;
+            if (child.tag !== "pui-iter") {
+              console.error("Custom elements are not supported in JSX yet");
+              continue;
+            }
           }
           rendered.push(child);
         } else if (Array.isArray(child)) {

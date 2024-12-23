@@ -46,13 +46,46 @@ const createMarker = (child_idx: number, idxs: Array<number>) => {
 }
 
 
+function puiIterElem(model: PUIModel, elem: PUIElement, mark: (x: any) => string): PUIElement | null {
+  if (elem.tag != "pui-iter") return null;
+  const list = (elem.data.list || elem.attrs.list) as PUIState<any[]>;
+  const Template = elem.attrs.template;
+  if (!list || typeof Template != "function") {
+    throw new Error("Missing parameters for pui-iter. Did you forget to pass the list and/or template?");
+  }
+  const listItem = mark("listItem");
+  const itemBinding = "${ " + listItem + " }";
+  // @ts-ignore
+  const template = Template({ itemBinding });
+  const listKey = mark("puiIterList");
+  template.attrs.pui = listItem + " <=* " + listKey;
+  Object.defineProperty(model, listKey, {
+    enumerable: false,
+    configurable: false,
+    get() {
+      return list.value.filter(x => x != null);
+    },
+  });
+  return template;
+}
+
 type PUIModel = Record<string, any> & { template: string };
 export function genModel(
   elem: PUIElement,
 ): PUIModel {
-  const { tag, attrs, data } = elem;
+  let { tag, attrs, data } = elem;
   const model: PUIModel = {} as any;
   let template = `<${tag}`;
+  if (tag == "pui-iter") {
+    const iterElem = puiIterElem(model, elem, (x) => `__root_${x}__`);
+    if (iterElem) {
+      elem = iterElem;
+      tag = iterElem.tag;
+      attrs = iterElem.attrs;
+      data = iterElem.data;
+      template = `<${tag}`;
+    }
+  }
   const attrsEntries = Object.entries(attrs).filter(
     ([key, _]) => key != "children",
   );
@@ -71,7 +104,7 @@ export function genModel(
   template += ">";
   if (elem.children.length > 0) {
     let child_idx = -1;
-    for (const child of elem.children) {
+    for (let child of elem.children) {
       child_idx += 1;
       if (child.ntype == "text") {
         template += escapeHTMLChild(child.tag);
@@ -79,6 +112,10 @@ export function genModel(
       }
       const mark = createMarker(child_idx, []);
       const childId = mark("");
+      {
+        const iterElem = puiIterElem(model, child as PUIElement, mark);
+        if (iterElem) child = iterElem;
+      }
       if (child.ntype == "custom") {
         const model = genModel(child as PUIElement);
         model[childId] = model;
@@ -214,7 +251,7 @@ function renderAttributesTemplate(model: PUIModel, data: Array<[string, PUIState
 function renderChildrenTemplate(idxs: Array<number>, elem: PUIElement, model: any, parent: PUIElement) {
   let template = '';
   let child_idx = -1;
-  for (const child of elem.children) {
+  for (let child of elem.children) {
     child_idx += 1;
     if (child.ntype == "text") {
       template += escapeHTMLChild(child.tag);
@@ -222,6 +259,10 @@ function renderChildrenTemplate(idxs: Array<number>, elem: PUIElement, model: an
     }
     const mark = createMarker(child_idx, idxs);
     const childId = mark("");
+    {
+      const iterElem = puiIterElem(model, child as PUIElement, mark);
+      if (iterElem) child = iterElem;
+    }
     if (child.ntype == "custom") {
       const model = genModel(child as PUIElement);
       model[childId] = model;
