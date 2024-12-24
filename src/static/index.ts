@@ -20,9 +20,26 @@ export function escapeHTMLChild(value: string): string {
     .replaceAll("\n", "<br />");
 }
 
+function puiIterHTML(elem: PUIElement): string | null {
+  if (elem.tag != "pui-iter") return null;
+  const list = (elem.data.list || elem.attrs.list) as PUIState<any[]>;
+  const Template = elem.attrs.template as (props: { itemBinding: string; }) => PUIElement;
+  if (!list || typeof Template != "function") {
+    throw new Error("Missing parameters for pui-iter. Did you forget to pass the list and/or template?");
+  }
+  const items = list.value.filter(x => x != null);
+  const itemBinding = "${ __PUI_ITER_ITEM_ELEMENT__ }";
+  const templateHtml = renderHTML(() => Template({ itemBinding }));
+  let html = "";
+  for (const item of items) {
+    html += templateHtml.replaceAll(itemBinding, `${item}`) + '\n';
+  }
+  return html;
+}
 
 export function renderHTML(Component: FunctionComponent): string {
   const elem = Component({ children: [] });
+  if (elem.tag === "pui-iter") return puiIterHTML(elem)!;
   const { tag, data, attrs } = elem;
   let html = `<${tag}`;
   const dataEntries = Object.entries(data);
@@ -118,6 +135,13 @@ function renderChildrenHTML(children: Array<PUINode>) {
       case "custom":
       case "element":
         const subelem = child as PUIElement;
+        {
+          const puiIter = puiIterHTML(subelem);
+          if (puiIter) {
+            html += puiIter;
+            continue;
+          }
+        }
         let subHtml = `<${subelem.tag}`;
         const dataEntries = Object.entries(subelem.data);
         const attrsEntries = Object.entries(subelem.attrs);
