@@ -18,10 +18,12 @@ Done Tasks:
 - [x] Attribute two way binding to state (JSX `<input value={state.sync()} />` == PUI binding `<input ${ value <=> state } />`)
 - [x] Render static HTML from template (`import { renderHTML } from "pui-jsx/static"`)
 
+Needs Cleanup:
+- [ ] Iteration binding (Puts binding as property `pui="${ item &lt;=* list }"` instead of directly adding it into the template)
+
 Main Tasks:
 - [ ] State sub-property binding
 - [ ] Element ref binding
-- [ ] Iteration binding (PUI binding operator: `${ item <=* list }`)
 
 Secondary Tasks:
 - [ ] Playground for testing online
